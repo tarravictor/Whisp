@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Anonymous Chat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00c853;
+            --primary-dark: #009624;
+            --danger: #ff4444;
+            --warning: #ffbb33;
+            --background: #121212;
+            --surface: #1e1e1e;
+            --surface-light: #252525;
+            --border: #333;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--surface);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .connection-status {
+            padding: 8px 16px;
+            background: var(--surface-light);
+            text-align: center;
+            font-size: 0.8rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .online {
+            color: var(--primary);
+        }
+        
+        .offline {
+            color: var(--danger);
+        }
+
+        .chat-header {
+            padding: 20px;
+            background: var(--surface-light);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .chat-header h1 {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .invite-section {
+            background: var(--surface-light);
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .invite-code-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 12px 0;
+        }
+
+        .invite-code {
+            font-size: 1.25rem;
+            letter-spacing: 3px;
+            font-weight: 600;
+            color: var(--primary);
+            background: rgba(0, 200, 83, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: monospace;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface-light);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            opacity: 0.9;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        .pending-invites {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: none;
+        }
+
+        .pending-invites h3 {
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .pending-list {
+            list-style: none;
+        }
+
+        .pending-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .pending-item:last-child {
+            border-bottom: none;
+        }
+
+        .pending-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .members {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .members h3 {
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .member-list {
+            list-style: none;
+        }
+
+        .member-list li {
+            padding: 10px 0;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .member-list li:last-child {
+            border-bottom: none;
+        }
+
+        .member-list li::before {
+            content: "•";
+            color: var(--primary);
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        .member-status {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+
+        .status-online {
+            background: var(--primary);
+        }
+
+        .status-offline {
+            background: var(--text-secondary);
+        }
+
+        .typing-indicator {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            padding: 0 16px 8px;
+            height: 20px;
+        }
+
+        #messages {
+            height: 300px;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .message-sender {
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+        }
+
+        .message-sender::before {
+            content: "";
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .message-content {
+            background: var(--surface-light);
+            padding: 12px;
+            border-radius: 0 12px 12px 12px;
+            margin-left: 16px;
+        }
+
+        .message-time {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        .system-message {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin: 12px 0;
+            font-style: italic;
+        }
+
+        #messageForm {
+            display: flex;
+            padding: 16px;
+            background: var(--surface-light);
+            border-top: 1px solid var(--border);
+        }
+
+        #messageInput {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            background: var(--surface);
+            color: var(--text-primary);
+            font-size: 1rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        #messageInput:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0, 200, 83, 0.2);
+        }
+
+        #messageForm button {
+            margin-left: 12px;
+            padding: 12px 20px;
+            border-radius: 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        #messageForm button:hover {
+            background: var(--primary-dark);
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            animation: fadeInUp 0.3s ease-out;
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translate(-50%, 20px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-10px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                border-radius: 12px;
+            }
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="connection-status" id="connectionStatus">
+            Connecting to secure chat...
+        </div>
+        
+        <div class="chat-header">
+            <h1>Anonymous #<span id="chatId">---</span></h1>
+            <div class="invite-section">
+                <div>Invite Code:</div>
+                <div class="invite-code-container">
+                    <span id="inviteCode" class="invite-code">----</span>
+                </div>
+                <div class="btn-group">
+                    <button id="generateCode" class="btn btn-primary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        NEW CODE
+                    </button>
+                    <button id="copyInvite" class="btn btn-secondary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M8 17.929H6c-1.105 0-2-.912-2-2.036V5.036C4 3.91 4.895 3 6 3h8c1.105 0 2 .911 2 2.036v1.866m-6 .17h8c1.105 0 2 .91 2 2.035v10.857C20 21.09 19.105 22 18 22h-8c-1.105 0-2-.911-2-2.036V9.107c0-1.124.895-2.036 2-2.036z"></path>
+                        </svg>
+                        COPY
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="pending-invites" id="pendingInvites">
+            <h3>Pending Invitations</h3>
+            <ul class="pending-list" id="pendingList"></ul>
+        </div>
+        
+        <div class="members">
+            <h3>Members</h3>
+            <ul class="member-list" id="memberList"></ul>
+        </div>
+        
+        <div class="typing-indicator" id="typingIndicator"></div>
+        
+        <div id="messages"></div>
+        
+        <form id="messageForm">
+            <input type="text" id="messageInput" placeholder="Type your message here..." required>
+            <button type="submit">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 2L11 13"></path>
+                    <path d="M22 2l-7 20-4-9-9-4 20-7z"></path>
+                </svg>
+            </button>
+        </form>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    
+    <script>
+        // Firebase configuration - REPLACE WITH YOUR CONFIG
+        const firebaseConfig = {
+  apiKey: "AIzaSyCnMkwUv9Lzv7YLfdEb5fdQ8tC6w2uSWKs",
+  authDomain: "whisp-12a11.firebaseapp.com",
+  databaseURL: "https://whisp-12a11-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "whisp-12a11",
+  storageBucket: "whisp-12a11.firebasestorage.app",
+  messagingSenderId: "330685083099",
+  appId: "1:330685083099:web:b2c362875bfc1adf694bfe"
+        }
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        // DOM elements
+        const connectionStatus = document.getElementById('connectionStatus');
+        const chatIdEl = document.getElementById('chatId');
+        const inviteCodeEl = document.getElementById('inviteCode');
+        const generateCodeBtn = document.getElementById('generateCode');
+        const copyInviteBtn = document.getElementById('copyInvite');
+        const pendingInvitesSection = document.getElementById('pendingInvites');
+        const pendingList = document.getElementById('pendingList');
+        const memberList = document.getElementById('memberList');
+        const messagesContainer = document.getElementById('messages');
+        const messageForm = document.getElementById('messageForm');
+        const messageInput = document.getElementById('messageInput');
+        const notification = document.getElementById('notification');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        // App state
+        let chatId;
+        let inviteCode;
+        let userId;
+        let userName;
+        let isOwner = false;
+        let lastTypingTime = 0;
+        let typingTimeout;
+
+        // Initialize the app
+        initApp();
+
+        async function initApp() {
+            try {
+                // Sign in anonymously
+                const userCredential = await auth.signInAnonymously();
+                userId = userCredential.user.uid;
+                userName = `Anonymous ${generateCode(4)}`;
+                
+                // Check if joining existing chat
+                const urlParams = new URLSearchParams(window.location.search);
+                const joinCode = urlParams.get('join');
+                
+                if (joinCode) {
+                    // Joining existing chat
+                    await joinChat(joinCode);
+                } else {
+                    // Creating new chat
+                    await createNewChat();
+                }
+                
+                // Set up realtime listeners
+                setupRealtimeListeners();
+                updateConnectionStatus(true);
+                
+            } catch (error) {
+                console.error("Initialization error:", error);
+                updateConnectionStatus(false);
+                showNotification("Failed to initialize chat. Please refresh.");
+            }
+        }
+
+        async function createNewChat() {
+            chatId = generateCode(6);
+            inviteCode = generateCode(4);
+            isOwner = true;
+            
+            // Update UI
+            chatIdEl.textContent = chatId;
+            inviteCodeEl.textContent = inviteCode;
+            
+            // Create chat in database
+            await database.ref(`chats/${chatId}`).set({
+                createdAt: firebase.database.ServerValue.TIMESTAMP,
+                owner: userId,
+                inviteCode: inviteCode,
+                active: true
+            });
+            
+            // Add owner as member
+            await database.ref(`members/${chatId}/${userId}`).set({
+                id: userId,
+                name: userName,
+                joined: firebase.database.ServerValue.TIMESTAMP,
+                status: 'online',
+                lastActive: firebase.database.ServerValue.TIMESTAMP
+            });
+            
+            addSystemMessage("You created this secure anonymous chat");
+            addSystemMessage("Share the invite code to allow others to join");
+        }
+
+        async function joinChat(joinCode) {
+            // Find chat by invite code
+            const snapshot = await database.ref('chats').orderByChild('inviteCode').equalTo(joinCode).once('value');
+            
+            if (!snapshot.exists()) {
+                throw new Error("Invalid invite code");
+            }
+            
+            // Get chat data
+            const chatData = snapshot.val();
+            chatId = Object.keys(chatData)[0];
+            const chatInfo = chatData[chatId];
+            
+            if (!chatInfo.active) {
+                throw new Error("This chat is no longer active");
+            }
+            
+            inviteCode = joinCode;
+            
+            // Update UI
+            chatIdEl.textContent = chatId;
+            inviteCodeEl.textContent = inviteCode;
+            
+            // Check if already a member
+            const memberSnapshot = await database.ref(`members/${chatId}/${userId}`).once('value');
+            
+            if (memberSnapshot.exists()) {
+                // Rejoining chat
+                await database.ref(`members/${chatId}/${userId}`).update({
+                    status: 'online',
+                    lastActive: firebase.database.ServerValue.TIMESTAMP
+                });
+                addSystemMessage("You rejoined the chat");
+            } else {
+                // New member - add to pending
+                await database.ref(`pending/${chatId}/${userId}`).set({
+                    id: userId,
+                    name: userName,
+                    requestedAt: firebase.database.ServerValue.TIMESTAMP
+                });
+                addSystemMessage("Join request sent. Waiting for approval...");
+            }
+        }
+
+        function setupRealtimeListeners() {
+            // Connection state listener
+            database.ref('.info/connected').on('value', (snapshot) => {
+                updateConnectionStatus(snapshot.val() === true);
+            });
+
+            // Members listener
+            database.ref(`members/${chatId}`).on('value', (snapshot) => {
+                const members = snapshot.val() || {};
+                updateMemberList(members);
+                
+                // Check if current user is approved
+                if (members[userId] && pendingInvitesSection.style.display === 'block') {
+                    pendingInvitesSection.style.display = 'none';
+                    addSystemMessage("You've been approved to join the chat");
+                }
+            });
+
+            // Pending invitations listener (only for owner)
+            if (isOwner) {
+                database.ref(`pending/${chatId}`).on('value', (snapshot) => {
+                    const pending = snapshot.val() || {};
+                    updatePendingInvites(pending);
+                });
+            }
+
+            // Messages listener
+            database.ref(`messages/${chatId}`).orderByChild('timestamp').limitToLast(100).on('child_added', (snapshot) => {
+                const message = snapshot.val();
+                displayMessage(message);
+            });
+
+            // Typing indicators listener
+            database.ref(`typing/${chatId}`).on('value', (snapshot) => {
+                const typingUsers = snapshot.val() || {};
+                updateTypingIndicator(typingUsers);
+            });
+        }
+
+        function updateConnectionStatus(connected) {
+            if (connected) {
+                connectionStatus.textContent = "Connected to secure chat";
+                connectionStatus.classList.remove('offline');
+                connectionStatus.classList.add('online');
+                
+                // Update user status
+                if (chatId && userId) {
+                    database.ref(`members/${chatId}/${userId}`).update({
+                        status: 'online',
+                        lastActive: firebase.database.ServerValue.TIMESTAMP
+                    });
+                }
+            } else {
+                connectionStatus.textContent = "Disconnected. Trying to reconnect...";
+                connectionStatus.classList.remove('online');
+                connectionStatus.classList.add('offline');
+            }
+        }
+
+        function updatePendingInvites(pending) {
+            pendingInvitesSection.style.display = Object.keys(pending).length > 0 ? 'block' : 'none';
+            
+            pendingList.innerHTML = Object.entries(pending).map(([id, user]) => `
+                <li class="pending-item">
+                    <span>${user.name}</span>
+                    <div class="pending-actions">
+                        <button class="btn btn-primary btn-sm" onclick="approveMember('${id}')">Approve</button>
+                        <button class="btn btn-danger btn-sm" onclick="declineMember('${id}')">Decline</button>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        function updateMemberList(members) {
+            memberList.innerHTML = Object.entries(members).map(([id, member]) => `
+                <li>
+                    ${member.name}
+                    <span class="member-status ${member.status === 'online' ? 'status-online' : 'status-offline'}"></span>
+                </li>
+            `).join('');
+        }
+
+        function updateTypingIndicator(typingUsers) {
+            const now = Date.now();
+            const activeTypers = Object.values(typingUsers)
+                .filter(user => now - user.timestamp < 3000 && user.id !== userId);
+            
+            if (activeTypers.length > 0) {
+                const names = activeTypers.map(user => user.name).join(', ');
+                typingIndicator.textContent = `${names} ${activeTypers.length > 1 ? 'are' : 'is'} typing...`;
+            } else {
+                typingIndicator.textContent = '';
+            }
+        }
+
+        // Handle message submission
+        messageForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const messageText = messageInput.value.trim();
+            
+            if (messageText) {
+                try {
+                    await database.ref(`messages/${chatId}`).push().set({
+                        text: messageText,
+                        sender: userId,
+                        senderName: userName,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    });
+                    messageInput.value = '';
+                    
+                    // Clear typing indicator
+                    database.ref(`typing/${chatId}/${userId}`).remove();
+                    clearTimeout(typingTimeout);
+                } catch (error) {
+                    console.error("Error sending message:", error);
+                    showNotification("Failed to send message");
+                }
+            }
+        });
+
+        // Typing detection
+        messageInput.addEventListener('input', () => {
+            const now = Date.now();
+            if (now - lastTypingTime > 1000) {
+                database.ref(`typing/${chatId}/${userId}`).set({
+                    id: userId,
+                    name: userName,
+                    timestamp: now
+                });
+                lastTypingTime = now;
+                
+                // Clear typing status after 3 seconds of inactivity
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => {
+                    database.ref(`typing/${chatId}/${userId}`).remove();
+                }, 3000);
+            }
+        });
+
+        // Approve member (called from button click)
+        window.approveMember = async function(userId) {
+            try {
+                // Get user data from pending
+                const pendingUser = await database.ref(`pending/${chatId}/${userId}`).once('value');
+                const userData = pendingUser.val();
+                
+                // Add to members
+                await database.ref(`members/${chatId}/${userId}`).set({
+                    id: userId,
+                    name: userData.name,
+                    joined: firebase.database.ServerValue.TIMESTAMP,
+                    status: 'online',
+                    lastActive: firebase.database.ServerValue.TIMESTAMP
+                });
+                
+                // Remove from pending
+                await database.ref(`pending/${chatId}/${userId}`).remove();
+                
+                // Send system message
+                const messageRef = database.ref(`messages/${chatId}`).push();
+                await messageRef.set({
+                    text: `${userData.name} has joined the chat`,
+                    sender: 'system',
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+                
+                showNotification("Member approved");
+            } catch (error) {
+                console.error("Error approving member:", error);
+                showNotification("Failed to approve member");
+            }
+        };
+
+        // Decline member (called from button click)
+        window.declineMember = async function(userId) {
+            try {
+                await database.ref(`pending/${chatId}/${userId}`).remove();
+                showNotification("Invitation declined");
+            } catch (error) {
+                console.error("Error declining member:", error);
+                showNotification("Failed to decline invitation");
+            }
+        };
+
+        // Generate random code
+        function generateCode(length) {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        // Display a message
+        function displayMessage(message) {
+            // Skip if already displayed
+            if (document.getElementById(`msg-${message.timestamp}`)) return;
+            
+            const messageElement = document.createElement('div');
+            messageElement.className = message.sender === 'system' ? 'system-message' : 'message';
+            messageElement.id = `msg-${message.timestamp}`;
+            
+            if (message.sender === 'system') {
+                messageElement.textContent = message.text;
+            } else {
+                const isCurrentUser = message.sender === userId;
+                messageElement.innerHTML = `
+                    <div class="message-sender">
+                        ${isCurrentUser ? 'You' : message.senderName}
+                    </div>
+                    <div class="message-content" style="margin-left: ${isCurrentUser ? '60px' : '16px'}; border-radius: ${isCurrentUser ? '12px 0 12px 12px' : '0 12px 12px 12px'}; background: ${isCurrentUser ? 'rgba(0, 200, 83, 0.1)' : 'var(--surface-light)'}">
+                        <p>${message.text}</p>
+                        <div class="message-time">
+                            ${new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Add system message
+        function addSystemMessage(text) {
+            const message = {
+                text: text,
+                sender: 'system',
+                timestamp: Date.now()
+            };
+            displayMessage(message);
+        }
+
+        // Show notification
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.animation = 'fadeInUp 0.3s ease-out reverse';
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                    notification.style.animation = 'fadeInUp 0.3s ease-out';
+                }, 300);
+            }, 2000);
+        }
+
+        // Generate new invite code
+        generateCodeBtn.addEventListener('click', async () => {
+            try {
+                const newCode = generateCode(4);
+                await database.ref(`chats/${chatId}/inviteCode`).set(newCode);
+                inviteCode = newCode;
+                inviteCodeEl.textContent = newCode;
+                showNotification("New invite code generated");
+            } catch (error) {
+                console.error("Error generating new code:", error);
+                showNotification("Failed to generate new code");
+            }
+        });
+
+        // Copy invite link
+        copyInviteBtn.addEventListener('click', () => {
+            const inviteUrl = `${window.location.origin}${window.location.pathname}?join=${inviteCode}`;
+            navigator.clipboard.writeText(inviteUrl)
+                .then(() => {
+                    showNotification("Invite link copied to clipboard");
+                    copyInviteBtn.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 6L9 17l-5-5"></path>
+                        </svg>
+                        COPIED
+                    `;
+                    setTimeout(() => {
+                        copyInviteBtn.innerHTML = `
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M8 17.929H6c-1.105 0-2-.912-2-2.036V5.036C4 3.91 4.895 3 6 3h8c1.105 0 2 .911 2 2.036v1.866m-6 .17h8c1.105 0 2 .91 2 2.035v10.857C20 21.09 19.105 22 18 22h-8c-1.105 0-2-.911-2-2.036V9.107c0-1.124.895-2.036 2-2.036z"></path>
+                            </svg>
+                            COPY
+                        `;
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error("Could not copy text: ", err);
+                    showNotification("Failed to copy invite link");
+                });
+        });
+
+        // Update user status when leaving
+        window.addEventListener('beforeunload', () => {
+            if (chatId && userId) {
+                database.ref(`members/${chatId}/${userId}`).update({
+                    status: 'offline',
+                    lastActive: firebase.database.ServerValue.TIMESTAMP
+                });
+                database.ref(`typing/${chatId}/${userId}`).remove();
+            }
+        });
+    </script>
+
+    <style>
+        /* Overlay to block user actions visually */
+        #blocker-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+            background: rgba(18,18,18,0.96);
+            color: #fff;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            font-family: 'Roboto', sans-serif;
+            text-align: center;
+            animation: fadeIn 0.3s;
+        }
+        #blocker-overlay .blocker-message {
+            background: #252525;
+            padding: 32px 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+        #blocker-overlay .blocker-hint {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+    </style>
+    <div id="blocker-overlay">
+        <div class="blocker-message">Action blocked for privacy & security.</div>
+        <div class="blocker-hint">Certain actions (copy, inspect, etc.) are disabled.</div>
+    </div>
+    <script>
+        // Prevent right-click context menu
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            showBlocker();
+        });
+
+        // Prevent F12, Ctrl+Shift+I, Ctrl+U, Ctrl+Shift+C, Ctrl+C
+        document.addEventListener('keydown', function(e) {
+            if (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'C')) ||
+                (e.ctrlKey && e.key === 'u') ||
+                (e.ctrlKey && e.key === 'c')
+            ) {
+                e.preventDefault();
+                showBlocker();
+            }
+        });
+
+        // Prevent copy
+        document.addEventListener('copy', function(e) {
+            e.preventDefault();
+            showBlocker();
+        });
+
+        // Show overlay for 2 seconds
+        function showBlocker() {
+            const overlay = document.getElementById('blocker-overlay');
+            overlay.style.display = 'flex';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
