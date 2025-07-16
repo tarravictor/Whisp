@@ -1,4 +1,5 @@
 # Whisp 🔒 - Anonymous Messaging App
+# - Critical Bug Ongoing Fix 🚀
 
 ## Overview
 
